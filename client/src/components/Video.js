@@ -5,6 +5,14 @@ import {FaMicrophoneSlash, FaMicrophone} from 'react-icons/fa'
 const Video = (props) => {
   const ref = useRef();
 
+  const videoConstraints = {
+    minAspectRatio: 1.333,
+    minFrameRate: 60,
+     facingMode: props.switchCamera ? {exact: 'environment'}:'user' ,
+    // height: window.innerHeight / 1.8,g
+    // width: window.innerWidth / 2,
+  };
+
   useEffect(() => {
     props.peer.on("stream", (stream) => {
       ref.current.srcObject = stream;
@@ -16,7 +24,7 @@ const Video = (props) => {
       <h1 className="camera_username">
         {props.userName}
         </h1>
-      <video className='styled_video' playsInline autoPlay ref={ref} />
+      <video videoConstraints={videoConstraints} className='styled_video' playsInline autoPlay ref={ref} />
       <div className="small_controls">
         <div className="small_icon_components">
           {props.videoFlagTemp ? <RiCameraFill/> : <RiCameraOffFill/>}

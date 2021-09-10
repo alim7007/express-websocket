@@ -25,6 +25,8 @@ input:focus {
   font-size: 24px;
   color: #fff;
   background-color: #1d2635;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .videoAndControls {
@@ -354,11 +356,6 @@ input:focus {
 
 /* ads */
 
-.adHomepage {
-  width: 700px;
-  height: 250px;
-  border: 1px solid white;
-}
 
 @media only screen and (max-width: 750px) {
   .videoAndControls {
@@ -374,4 +371,11 @@ input:focus {
   .chat_messages_container {
     height: 400px;
   }
+  .videoAndControls {
+  height: 100vh;
+  width: 100vw;
+}
+  .Dish {
+  height: 75%;
+}
 }

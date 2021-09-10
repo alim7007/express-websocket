@@ -3,9 +3,9 @@ import { SocketContext } from '../socketContext/Context'
 import {BiLeftArrow} from 'react-icons/bi'
 import {RiMailSendLine} from 'react-icons/ri'
 
-const Chat = ({phone, openChat,setOpenChat, setMessageNote}) => {
+const Chat = ({phone, openChat,setOpenChat, setMessageNote, setMessageNoteNum}) => {
     const [chat_text, setChat_text] = useState('')
-      const { name, socketRef, messages } = useContext(SocketContext)
+      const { name, roomID, socketRef, messages } = useContext(SocketContext)
 
     return (
     <div className={phone ?  `${openChat ? 'open_chatContainerPhone' : 'chatContainerPhone'}`:'chatContainer'}>
@@ -14,6 +14,7 @@ const Chat = ({phone, openChat,setOpenChat, setMessageNote}) => {
         <span onClick={()=>{
           setOpenChat(false)
           setMessageNote(false)
+          setMessageNoteNum(0)
         }}><BiLeftArrow/></span>Chat</>
         :""}</div>
         {/* //////////////////////////////// */}
@@ -33,7 +34,7 @@ const Chat = ({phone, openChat,setOpenChat, setMessageNote}) => {
         }} name="chat_text" id="chat_text" />
         <button className="chat_btn" onClick={()=>{
           if(chat_text !== ""){
-          socketRef.current.emit("chat", {chat_text, name})
+          socketRef.current.emit("chat", {chat_text, name, roomID})
           setChat_text('')
           }
         }}><RiMailSendLine/></button>

@@ -2,13 +2,12 @@ import React , {createContext, useState, useRef, useEffect} from 'react'
 import { dish } from "../utils/dish";
 import io from "socket.io-client";
 import Peer from "simple-peer";
-import useLocalStorage from '../hooks/useLocalStorage';
-import { useHistory } from 'react-router-dom';
+// import useLocalStorage from '../hooks/useLocalStorage';
+// import { useHistory } from 'react-router-dom';
 const SocketContext = createContext();
 
 
 const ContextProvider = ({ children }) => {
-  const history = useHistory()
   const [name, setName] = useState("")
   const [peers, setPeers] = useState([]);
   const [audioFlag, setAudioFlag] = useState(true);
@@ -16,36 +15,43 @@ const ContextProvider = ({ children }) => {
   const [userUpdate, setUserUpdate] = useState([]);
   const [messages, setMessages] = useState([]);
   const [messageNote, setMessageNote] = useState(false);
+  const [messageNoteNum, setMessageNoteNum] = useState(-1);
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
   const dishEl = document.querySelector('#Dish')
   const chatCont = document.querySelector(".chat_messages_container") 
   const [roomID, setRoomID] = useState('')
-  const videoConstraints = {
-    minAspectRatio: 1.333,
-    minFrameRate: 60,
-    // height: window.innerHeight / 1.8,g
-    // width: window.innerWidth / 2,
-  };
+  const [switchCamera, setSwitchCamera] = useState(false)
+  // const videoConstraints = {
+  //   minAspectRatio: 1.333,
+  //   minFrameRate: 60,
+  //    facingMode: switchCamera ? {exact: 'environment'}:'user' ,
+  //   // height: window.innerHeight / 1.8,g
+  //   // width: window.innerWidth / 2,
+  // };
   useEffect(() => {
-    socketRef.current = io.connect("/");
+    socketRef.current = io.connect("/",{ 
+    reconnectionDelay: 1000,
+    reconnectionDelayMax : 5000,
+    reconnectionAttempts: 99999
+}
+);
     if(roomID !== ""){
-    createStream();
-    }
+        createStream();
+      }
   }, [roomID]);
 
-  
-
-
+useEffect(() => {
+  console.log(switchCamera)
+}, [switchCamera])
   function createStream() {
     navigator.mediaDevices
-      .getUserMedia({ video: videoConstraints, audio: true })
+      .getUserMedia({ video: true, audio: true })
       .then((stream) => {
         userVideo.current.srcObject = stream;
         socketRef.current.emit("join room", roomID, name);
         socketRef.current.on("all users", (users) => {
-          console.log(' ALL USER ')
           const peeers = [];
           users.forEach((user) => {
             const peer = createPeer(user.socketID, socketRef.current.id, name, stream);
@@ -59,58 +65,61 @@ const ContextProvider = ({ children }) => {
               peerName: user.username,
               peer,
             });
-            console.log(peeers)
+            // console.log(peeers)
           });
           setPeers(peeers);
         });
         socketRef.current.on("user joined", (payload) => {
-          console.log("user JOINED",payload)
+          // console.log("user JOINED",payload)
           const peer = addPeer(payload.signal, payload.callerID, stream);
           peersRef.current.push({
             peerID: payload.callerID,
             peerName: payload.callerName,
             peer,
           });
-          const peerObj = {
-            peer,
-            peerID: payload.callerID,
-            peerName: payload.callerName
-          };
           if(dishEl) dish(dishEl)
-          setPeers((users) => [...users, peerObj]);
+          let peeers = []
+          peersRef.current.forEach(peer=>{
+            peeers.push(peer)
+          })
+          setPeers(peeers);
         });
-
-
         socketRef.current.on("user left", (id) => {
           const peerObj = peersRef.current.find((p) => p.peerID === id);
           if (peerObj) {
             peerObj.peer.destroy();
           }
-          const peers = peersRef.current.filter((p) => p.peerID !== id);
-          peersRef.current = peers;
-          setPeers(peers);
+          const peersLeft = peersRef.current.filter((p) => p.peerID !== id);
+          peersRef.current = peersLeft;
+          setPeers(peersLeft);
           if(dishEl) dish(dishEl)
         });
 
-        socketRef.current.on("receiving returned signal", (payload) => {
+          socketRef.current.on("receiving returned signal", (payload) => {
           const item = peersRef.current.find((p) => p.peerID === payload.id);
           item.peer.signal(payload.signal);
-        });
+        })
 
         socketRef.current.on("change", (payload) => {
           setUserUpdate(payload);
         });
 
-        socketRef.current.on("chat_message", (message) => {
-          setMessages(messages => [...messages, message])
+        socketRef.current.on("chat_message", (users) => {
+          const messages = users[roomID].roomMessage
+          setMessages(messages)
           setMessageNote(true)
           chatCont.scrollTop = chatCont.scrollHeight
         });
+
       });
   }
 
+  useEffect(() => {
+          setMessageNoteNum(messageNoteNum + 1)
+  }, [messages])
   
   useEffect(()=>{
+    console.log(Peer.length)
     if(dishEl) dish(dishEl)
   },[peers])
 
@@ -144,7 +153,6 @@ const ContextProvider = ({ children }) => {
     peer.on("signal", (signal) => {
       socketRef.current.emit("returning signal", { signal, callerID });
     });
-
     peer.signal(incomingSignal);
 
     return peer;
@@ -196,11 +204,6 @@ const ContextProvider = ({ children }) => {
             }
   }
 
-    useEffect(() => {
-        
-    }, [])
-
-  
 
     return (
         <SocketContext.Provider value={
@@ -217,7 +220,11 @@ const ContextProvider = ({ children }) => {
              userUpdate,
              messages,
              messageNote,
-             setMessageNote
+             messageNoteNum,
+             setMessageNoteNum,
+             setMessageNote,
+             setSwitchCamera,
+             switchCamera,
              }}>
             {children}
         </SocketContext.Provider>

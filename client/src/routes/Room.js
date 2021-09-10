@@ -14,10 +14,14 @@ const Room = (props) => {
   const [phone, setPhone] = useState(false)
   const [alertLinkCopy, setAlertLinkCopy] = useState(false)
   const [openChat, setOpenChat] = useState(false)
-  const { roomID, setRoomID, userVideo, switcher, videoFlag, audioFlag, peers, userUpdate, socketRef, messages, setMessageNote, messageNote } = useContext(SocketContext)
+  const {name,setName, roomID, setRoomID, userVideo, switcher, videoFlag, audioFlag, peers, userUpdate, socketRef, messages, setMessageNote, setSwitchCamera, switchCamera, setMessageNoteNum, messageNoteNum, messageNote } = useContext(SocketContext)
 
     useEffect(()=>{
       setRoomID(props.match.params.roomID)
+      if(!name || name === "" | name === " "){
+      let namePropmt = prompt('Please enter your name:')
+      setName(namePropmt)
+      }
       if(window.innerWidth < 760){
           setPhone(true)
         }else{
@@ -33,15 +37,6 @@ const Room = (props) => {
         }
       })
 
-      useEffect(() => {
-        console.log(phone)
-      }, [phone])
-
-      window.addEventListener('load',()=>{
-      history.push('/')
-      window.location.reload()
-    })
-
     const alertLink = () =>{
       setAlertLinkCopy(true)
     }
@@ -56,7 +51,7 @@ const Room = (props) => {
     <>
     <div className={openChat ? "videoAndControlsNone" : "videoAndControls"}>
       <div className="title">
-        <img src={logo} style={{width:'50px', height:'50px'}} alt="" />
+        <img onClick={()=>{setSwitchCamera(!switchCamera)}} src={logo} style={{width:'50px', height:'50px'}} alt="" />
           &nbsp;
          Video Chat
       </div>
@@ -85,14 +80,14 @@ const Room = (props) => {
           });
         }
         return (
-            <Video key={peer.peerID} userName={peer.peerName} audioFlagTemp={audioFlagTemp} videoFlagTemp={videoFlagTemp} peer={peer.peer}/>
+            <Video switchCamera={switchCamera} key={peer.peerID} userName={peer.peerName} audioFlagTemp={audioFlagTemp} videoFlagTemp={videoFlagTemp} peer={peer.peer}/>
         );
       })}
     </div>
     {alertLinkCopy ? <div className="alertLinkCopy">Link copied</div> :""}
     <div className="controls">
           <div className="icon_components" onClick={()=>{
-             navigator.clipboard.writeText(roomID)
+             navigator.clipboard.writeText(window.location.href)
              alertLink()
           }}>
             <RiFileCopy2Fill/>
@@ -101,9 +96,10 @@ const Room = (props) => {
           <>
           <div className={messageNote ? "icon_components noted" :"icon_components"} onClick={()=>{
             setMessageNote(false)
+            setMessageNoteNum(0)
             setOpenChat(true)
             }}>
-              {messageNote ? <p className="messagesNum">{messages.length}</p>:""}
+              {messageNote ? <p className="messagesNum">{messageNoteNum}</p>:""}
             <RiWechat2Fill/>
           </div>
           </> : ""
@@ -123,7 +119,7 @@ const Room = (props) => {
           </div>
         </div>
     </div>
-      <Chat phone={phone} openChat={openChat} setOpenChat={setOpenChat} setMessageNote={setMessageNote}/>
+      <Chat phone={phone} openChat={openChat} setOpenChat={setOpenChat} setMessageNoteNum={setMessageNoteNum} setMessageNote={setMessageNote}/>
     </>
   );
 };

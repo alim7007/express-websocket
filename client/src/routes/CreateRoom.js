@@ -1,10 +1,11 @@
-import React,{useState, useContext} from "react";
+import React,{useState, useContext, useEffect} from "react";
 import { v1 as uuid } from "uuid";
 import { SocketContext } from "../socketContext/Context";
 import './createRoom.css'
 import logo from '../images/logo.svg'
 
 const CreateRoom = (props) => {
+    const [phone, setPhone] = useState(false)
     const [roomName, setRoomName] = useState('')
       const {name , setName} = useContext(SocketContext)
 
@@ -18,9 +19,30 @@ const CreateRoom = (props) => {
 
     function join() {
         if(name !== "" && roomName !== ""){
-         props.history.push(`/room/${roomName}`);
+          if(roomName.includes('/room/')){
+            let roomSplit = roomName.split("/room/", 3)
+            return props.history.push(`/room/${roomSplit[1]}`);
+          }else{
+            props.history.push(`/room/${roomName}`);
+          }
         }
     }
+
+    useEffect(() => {
+      if(window.innerWidth < 760){
+          setPhone(true)
+        }else{
+          setPhone(false)
+        }
+    }, [])
+
+      window.addEventListener('resize',()=>{
+        if(window.innerWidth < 760){
+          setPhone(true)
+        }else{
+          setPhone(false)
+        }
+      })
 
     return (
       <div className="homepage">
@@ -41,8 +63,9 @@ const CreateRoom = (props) => {
           2. Copy the link to the clipboard by clicking copy button in the chat. <br />
           3. Send the room-link to your friends for them to join you.
         </p>
+      {phone ? <div className="adHomepage"></div>:""}
       </div>
-      <div className="adHomepage"></div>
+      {phone ? "":<div className="adHomepage"></div>}
       </div>
     );
 };
